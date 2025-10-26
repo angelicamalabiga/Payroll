@@ -1,10 +1,10 @@
 package com.lopez.payroll.view;
 
-import com.lopez.payroll.model.User;
-import com.lopez.payroll.service.UserService;
-
-
 import com.lopez.payroll.database.*;
+import com.lopez.payroll.service.*;
+import com.lopez.payroll.model.*;
+import com.lopez.payroll.dao.*;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -156,8 +156,6 @@ public class LoginFrame extends JFrame {
             }
         });
         rightPanel.add(eyeButton);
-        
-        
 
         // Sign In button
         loginButton = new JButton("Sign In");
@@ -223,42 +221,44 @@ public class LoginFrame extends JFrame {
             return;
         }
 
-        UserService userService = new UserService();
-        User user = userService.login(employeeId, password);
-
-        if (user != null) {
-            if (userService.isDeactivated(user)) {
-                JOptionPane.showMessageDialog(this,
-                        "Account deactivated. Please contact admin.",
-                        "Account Deactivated", JOptionPane.WARNING_MESSAGE);
+        DatabaseManager dbManager = new DatabaseManager();
+        UserDetails userDetails = dbManager.getUserDetailsById(employeeId, password);
+        
+        if (userDetails != null) {
+            // Check if account is deactivated
+            if (userDetails.isDeactivated()) {
+                JOptionPane.showMessageDialog(this, 
+                    "Account deactivated. Please contact admin.",
+                    "Account Deactivated", 
+                    JOptionPane.WARNING_MESSAGE);
                 return;
             }
-
+            
+            // Login successful - check role and redirect
             this.dispose();
-
-            if (userService.isAdmin(user)) {
-                new DashboardFrame(user.getEmail()).setVisible(true);
-            } else if (userService.isUser(user)) {
-                String fullName = user.getFirstName() + " " +
-                        (user.getMiddleName() != null ? user.getMiddleName() + " " : "") +
-                        user.getLastName();
-                new UserFrame(user.getEmail(), fullName).setVisible(true);
+            
+            if (userDetails.isAdmin()) {
+                // Redirect to Admin Dashboard
+                new DashboardFrame(userDetails.getEmail()).setVisible(true);
+            } else if (userDetails.isUser()) {
+                // Redirect to User Dashboard
+                String fullName = userDetails.getFirstName() + " " + 
+                                (userDetails.getMiddleName() != null ? userDetails.getMiddleName() + " " : "") + 
+                                userDetails.getLastName();
+                new UserFrame(userDetails.getEmail(), fullName).setVisible(true);
             } else {
-                JOptionPane.showMessageDialog(this,
-                        "Unknown user role. Please contact administrator.",
-                        "Error", JOptionPane.ERROR_MESSAGE);
+                // Unknown role
+                JOptionPane.showMessageDialog(this, 
+                    "Unknown user role. Please contact administrator.",
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
                 new LoginFrame().setVisible(true);
             }
-
         } else {
             JOptionPane.showMessageDialog(this, "Invalid Employee ID or password.",
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    
-    
-    
 
     private static void openForgotPassword() {
         new ForgotPasswordFrame().setVisible(true);

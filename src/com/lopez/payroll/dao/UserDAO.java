@@ -1,216 +1,11 @@
 package com.lopez.payroll.dao;
 
-import com.lopez.payroll.database.DatabaseConnection;
-import com.lopez.payroll.model.User;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
-public class UserDAO {
-
-    /**
-     * Get user by ID and password (for login)
-     * Method name changed to match UserService call
-     */
-    public User getUserByCredentials(String employeeId, String password) {
-        String sql = "SELECT * FROM users WHERE id = ? AND password = ?";
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, employeeId);
-            ps.setString(2, password);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                User user = new User();
-                user.setId(rs.getInt("id"));
-                user.setEmail(rs.getString("email"));
-                user.setFirstName(rs.getString("first_name"));
-                user.setMiddleName(rs.getString("middle_name"));
-                user.setLastName(rs.getString("last_name"));
-                user.setRole(rs.getString("role"));
-                user.setStatus(rs.getString("status"));
-                return user;
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * Check if email exists
-     */
-    public boolean emailExists(String email) {
-        String sql = "SELECT COUNT(*) FROM users WHERE email = ?";
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, email);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt(1) > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    /**
-     * Add a new user (for ADMIN_Add_emp)
-     */
-    public boolean addUser(User user) {
-        String sql = "INSERT INTO users (email, password, first_name, middle_name, last_name, role, status) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, user.getEmail());
-            ps.setString(2, user.getPassword());
-            ps.setString(3, user.getFirstName());
-            ps.setString(4, user.getMiddleName());
-            ps.setString(5, user.getLastName());
-            ps.setString(6, user.getRole());
-            ps.setString(7, user.getStatus());
-            
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Update existing user (for ADMIN_manage_emp)
-     */
-    public boolean updateUser(User user) {
-        String sql = "UPDATE users SET email = ?, first_name = ?, middle_name = ?, " +
-                     "last_name = ?, role = ?, status = ? WHERE id = ?";
-        
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, user.getEmail());
-            ps.setString(2, user.getFirstName());
-            ps.setString(3, user.getMiddleName());
-            ps.setString(4, user.getLastName());
-            ps.setString(5, user.getRole());
-            ps.setString(6, user.getStatus());
-            ps.setInt(7, user.getId());
-            
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Delete user
-     */
-    public boolean deleteUser(int userId) {
-        String sql = "DELETE FROM users WHERE id = ?";
-        
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, userId);
-            
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Get all users (for ADMIN_manage_emp table display)
-     */
-    public List<User> getAllUsers() {
-        List<User> users = new ArrayList<>();
-        String sql = "SELECT * FROM users";
-        
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            
-            while (rs.next()) {
-                User user = new User();
-                user.setId(rs.getInt("id"));
-                user.setEmail(rs.getString("email"));
-                user.setFirstName(rs.getString("first_name"));
-                user.setMiddleName(rs.getString("middle_name"));
-                user.setLastName(rs.getString("last_name"));
-                user.setRole(rs.getString("role"));
-                user.setStatus(rs.getString("status"));
-                
-                users.add(user);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return users;
-    }
-
-    /**
-     * Get user by ID only
-     */
-    public User getUserById(int userId) {
-        String sql = "SELECT * FROM users WHERE id = ?";
-        
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                User user = new User();
-                user.setId(rs.getInt("id"));
-                user.setEmail(rs.getString("email"));
-                user.setFirstName(rs.getString("first_name"));
-                user.setMiddleName(rs.getString("middle_name"));
-                user.setLastName(rs.getString("last_name"));
-                user.setRole(rs.getString("role"));
-                user.setStatus(rs.getString("status"));
-                return user;
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * Check if user ID exists
-     */
-    public boolean userIdExists(int userId) {
-        String sql = "SELECT COUNT(*) FROM users WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt(1) > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-}
-
-
-
-/*package com.lopez.payroll.dao;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Date;
+
 import java.sql.Statement;
 
 import com.lopez.payroll.database.DatabaseConnection;
@@ -237,19 +32,50 @@ public int create(User user) {
 	             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 			
 
-            ps.setString(1, user.getUsername());
-            ps.setString(4, user.getFirstName());
-            ps.setString(5, user.getLastName());
-            ps.setString(5, user.getMiddleName());
-            ps.setString(2, user.getPassword());
-            ps.setString(3, user.getEmail());
-            ps.setString(1, user.getRole());
-            ps.setString(1, user.getGender());
+			 ps.setString(1, user.getUsername());
+	            ps.setString(2, user.getFirstName());
+	            ps.setString(3, user.getLastName());
+	            ps.setString(4, user.getMiddleName());
+	            ps.setString(5, user.getPassword());
+	            ps.setString(6, user.getEmail());
+	            ps.setString(7, user.getRole());
+	            
+	            // LocalDate → SQL Date
+	            if (user.getBirthDate() != null)
+	                ps.setDate(8, Date.valueOf(user.getBirthDate()));
+	            else
+	                ps.setNull(8, java.sql.Types.DATE);
+	            
+	            ps.setString(9, user.getGender());
+	            ps.setString(10, user.getNationality());
+	            ps.setString(11, user.getHouseNo());
+	            ps.setString(12, user.getBarangay());
+	            ps.setString(13, user.getCity());
+	            ps.setString(14, user.getProvince());
+	            ps.setString(15, user.getZipCode());
+	            ps.setString(16, user.getContactNo());
+	            ps.setString(17, user.getEmergencyNo1());
+	            ps.setString(18, user.getEmergencyNo2());
+	            ps.setString(19, user.getPosition());
+	            
+	           //joiningdate
+	            if (user.getJoiningDate() != null)
+	                ps.setDate(20, Date.valueOf(user.getJoiningDate()));
+	            else
+	                ps.setNull(20, java.sql.Types.DATE);
+	            
+	            //created_at
+	            if (user.getCreatedAt() != null)
+	                ps.setDate(24, Date.valueOf(user.getCreatedAt()));
+	            else
+	                ps.setDate(24, new Date(System.currentTimeMillis()));
+	            //updatedat
+	            if (user.getUpdatedAt() != null)
+	                ps.setTimestamp(25, java.sql.Timestamp.valueOf(user.getUpdatedAt()));
+	            else
+	                ps.setTimestamp(25, new java.sql.Timestamp(System.currentTimeMillis()));
 
-
-
-
-            
+          
             
             int rowsInserted = ps.executeUpdate();
 
@@ -272,18 +98,15 @@ public int create(User user) {
 	}
 	
 	// NEW METHOD - Login using Employee ID
-	public User getUserById(int userId) {
-		String sql = """
-				SELECT 
-					e.id, e.email, e.full_name, e.role, m.status
-                FROM employees e
-                LEFT JOIN 
-					manage_employees m ON e.id = m.id
-                WHERE 
-					e.id = ?
-				""";
-		
-		User user = null;
+      public User getUserById(int userId) {
+          String sql = """
+            SELECT 
+                id, email, username, first_name, last_name, role, status
+            FROM users
+            WHERE id = ?
+            """;
+
+    User user = null;
 		
 		try (Connection conn = DatabaseConnection.getInstance().getConnection();
 	            PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -296,10 +119,19 @@ public int create(User user) {
             	user = new User();
                 user.setId(rs.getInt("id"));
                 user.setEmail(rs.getString("email"));
+                user.setUsername(rs.getString("username"));
                 user.setFirstName(rs.getString("first_name"));
                 user.setLastName(rs.getString("last_name"));
                 user.setRole(rs.getString("role"));
-                user.setStatus(rs.getString("status"));   
+                user.setStatus(rs.getString("status"));  
+                user.setBasicSalary(rs.getDouble("basic_salary"));
+                
+                Date birth = rs.getDate("birth_date");
+                if (birth != null) user.setBirthDate(birth.toLocalDate());
+                
+                Date joinDate = rs.getDate("joining_date");
+                if (joinDate != null) user.setJoiningDate(joinDate.toLocalDate());
+
             }
             
             return user;
@@ -312,7 +144,3 @@ public int create(User user) {
 	}
 
 }
-
-*/
-
-
